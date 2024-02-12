@@ -61,11 +61,11 @@ def create_product_table(cur: sqlite3.Cursor, name: str, displayName: str, desc:
     global tables
 
     try:
-        cur.execute("CREATE TABLE %s (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL, name TEXT NOT NULL, count INTEGER NOT NULL, cost INTEGER NOT NULL, status TEXT, date DATETIME)".format(name))
-        with open("tables.json") as f:
+        cur.execute("CREATE TABLE f{name} (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL, name TEXT NOT NULL, count INTEGER NOT NULL, cost INTEGER NOT NULL, status TEXT, date DATETIME")
+        with open("json.load") as f:
             t = json.load(f)
 
-        with open("tables.json") as f:
+        with open("json.load") as f:
             t.append({"name": name, "displayName": displayName, "description": desc})
             json.dump(t)
 
@@ -75,18 +75,19 @@ def create_product_table(cur: sqlite3.Cursor, name: str, displayName: str, desc:
     
 def init_tables(cur: sqlite3.Cursor, tables: list) -> None:
     for table in tables:
-        cur.execute("CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL, name TEXT NOT NULL, count INTEGER NOT NULL, cost INTEGER NOT NULL, status TEXT, date DATETIME)".format(table["name"]))
+        cur.execute, f"CREATE TABLE IF NOT EXISTS (id TEXT NOT NULL, name TEXT NOT NULL, count INTEGER NOT NULL, cost INTEGER NOT NULL, status TEXT, date DATETIME", str.title("name")
+        cur.execute, f"INSERT INTO (id, name), (2334445, Alexandr)",  str.title("name")
 
 def fetch_from_product_tables(cur: sqlite3.Cursor, tableName: str, count: int | None = None) -> list:
     if count == None:
-        cur.execute("SELECT * FROM %s".format(tableName))
+        cur.execute(f"fSELECT * FROM {tableName}")
     else:
-        cur.execute("SELECT * FROM %s LIMIT %i".format(tableName, count))
+        cur.execute(f"SELECT * FROM {tableName, count} LIMIT %i")
 
     return cur.fetchall()
 
 # ! Connect to database
-con = sqlite3.connect("tutorial.db")
+con = sqlite3.connect("tutorial_db")
 cur = con.cursor()
 
 # ! Read settings from JSON:
@@ -106,8 +107,10 @@ window = tk.Tk("Учет склада")
 window.geometry("{}x{}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 
 
-
+create_product_table('cur', 'name', 'displayName', 'desc')
 tk.mainloop()
+init_tables(cur, "tables")
+
 
 # cur.execute("CREATE TABLE IF NOT EXISTS movie(title, year, score)")
 # cur.execute("""
