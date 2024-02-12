@@ -55,6 +55,7 @@ import sqlite3
 # print(cur.execute("SELECT * FROM movie").fetchall())
 
 import json
+import tkinter as tk
 
 def create_product_table(cur: sqlite3.Cursor, name: str, displayName: str, desc: str) -> None:
     global tables
@@ -99,6 +100,14 @@ with open("tables.json", "r") as f:
 # ! Initialize tables
 init_tables(cur, tables)
 con.commit()
+
+# ! Run window
+window = tk.Tk("Учет склада")
+window.geometry("{}x{}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
+
+
+
+tk.mainloop()
 
 # cur.execute("CREATE TABLE IF NOT EXISTS movie(title, year, score)")
 # cur.execute("""
