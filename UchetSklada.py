@@ -81,8 +81,7 @@ def create_product_table(cur: sqlite3.Cursor, name: str, displayName: str, desc:
 
         tables = t
     except Exception as e:
-        # print(e)
-        ...
+        print(e)
     
 def init_tables(cur: sqlite3.Cursor, tables: list) -> None:
     for table in tables:
@@ -110,7 +109,6 @@ with open("tables.json", "r") as f:
 
 # ! Initialize tables
 init_tables(cur, tables)
-create_product_table(cur, 'product', 'Тестовая таблица', 'Описание таблицы')
 con.commit()
 
 # ! Run http server
@@ -126,14 +124,36 @@ class Handler(hts.SimpleHTTPRequestHandler):
 
         print(path)
 
-        if path == "/":
-            self.wfile.write("<h1>Method not found</h1>".encode())
-            return
-        elif path == "/get_table_info":
-            self.wfile.write(json.dumps(fetch_from_product_tables(cur, query["tableName"])).encode())
+        try:
+            if path == "/":
+                self.wfile.write("<h1>Method not found</h1>".encode())
+                return
+            elif path == "/get_table_info":
+                self.wfile.write(json.dumps(fetch_from_product_tables(cur, query["tableName"])).encode())
+                return
+            elif path == "/get_tables":
+                self.wfile.write(json.dumps(tables).encode())
+                return
+            elif path == "/delete_table":
+                cur.execute(f"DROP TABLE {query['name'][0]}")
+                # remove from tables
+                for i in tables:
+                    if i["name"] == query["name"][0]:
+                        tables.remove(i)
+                        break
+
+                with open("tables.json", "w") as f:
+                    json.dump(tables, f)
+                    
+                return
+            elif path == "/create_table":
+                create_product_table(cur, query["name"][0], query["displayName"][0], query["description"][0])
+                return
+        except:
+            self.wfile.write("ERR".encode())
             return
         
         self.wfile.write("<h1>Method not found</h1>".encode())
 
-# httpd = hts.HTTPServer(("127.0.0.1", 8000), Handler)
-# httpd.serve_forever()
+httpd = hts.HTTPServer(("127.0.0.1", 8000), Handler)
+httpd.serve_forever()
