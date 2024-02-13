@@ -55,38 +55,49 @@ import sqlite3
 # print(cur.execute("SELECT * FROM movie").fetchall())
 
 import json
-import tkinter as tk
+# import tkinter as tk
+import http.server as hts
+
+# module for parsing query
+import urllib.parse as up
 
 def create_product_table(cur: sqlite3.Cursor, name: str, displayName: str, desc: str) -> None:
     global tables
 
     try:
-        cur.execute("CREATE TABLE %s (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL, name TEXT NOT NULL, count INTEGER NOT NULL, cost INTEGER NOT NULL, status TEXT, date DATETIME)".format(name))
-        with open("tables.json") as f:
+        cur.execute(f"""CREATE TABLE {name} (\
+                    id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \
+                    name TEXT NOT NULL, \
+                    count INTEGER NOT NULL, \
+                    cost INTEGER NOT NULL, \
+                    status TEXT, \
+                    date DATETIME)""")
+        with open("tables.json", "r") as f:
             t = json.load(f)
 
-        with open("tables.json") as f:
+        with open("tables.json", "w") as f:
             t.append({"name": name, "displayName": displayName, "description": desc})
-            json.dump(t)
+            json.dump(t, f)
 
         tables = t
-    except:
-        pass
+    except Exception as e:
+        # print(e)
+        ...
     
 def init_tables(cur: sqlite3.Cursor, tables: list) -> None:
     for table in tables:
-        cur.execute("CREATE TABLE IF NOT EXISTS %s (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL, name TEXT NOT NULL, count INTEGER NOT NULL, cost INTEGER NOT NULL, status TEXT, date DATETIME)".format(table["name"]))
+        cur.execute(f"CREATE TABLE IF NOT EXISTS {table["name"]} (id TEXT NOT NULL, name TEXT NOT NULL, count INTEGER NOT NULL, cost INTEGER NOT NULL, status TEXT, date DATETIME)")
 
 def fetch_from_product_tables(cur: sqlite3.Cursor, tableName: str, count: int | None = None) -> list:
     if count == None:
-        cur.execute("SELECT * FROM %s".format(tableName))
+        cur.execute(f"SELECT * FROM {tableName}")
     else:
-        cur.execute("SELECT * FROM %s LIMIT %i".format(tableName, count))
+        cur.execute(f"SELECT * FROM {tableName, count} LIMIT %i")
 
     return cur.fetchall()
 
 # ! Connect to database
-con = sqlite3.connect("tutorial.db")
+con = sqlite3.connect("database/db.db")
 cur = con.cursor()
 
 # ! Read settings from JSON:
@@ -99,19 +110,30 @@ with open("tables.json", "r") as f:
 
 # ! Initialize tables
 init_tables(cur, tables)
+create_product_table(cur, 'product', 'Тестовая таблица', 'Описание таблицы')
 con.commit()
 
-# ! Run window
-window = tk.Tk("Учет склада")
-window.geometry("{}x{}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
+# ! Run http server
+class Handler(hts.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        
+        url = up.urlparse(self.path)
 
-tk.mainloop()
+        query = up.parse_qs(url.query)
+        path = url.path
 
-# cur.execute("CREATE TABLE IF NOT EXISTS movie(title, year, score)")
-# cur.execute("""
-#     INSERT INTO movie VALUES
-#         ('Monty Python and the Holy Grail', 1975, 8.2),
-#         ('And Now for Something Completely Different', 1971, 7.5)
-# """)
-# con.commit()
-# print(cur.execute("SELECT * FROM movie").fetchall())
+        print(path)
+
+        if path == "/":
+            self.wfile.write("<h1>Method not found</h1>".encode())
+            return
+        elif path == "/get_table_info":
+            self.wfile.write(json.dumps(fetch_from_product_tables(cur, query["tableName"])).encode())
+            return
+        
+        self.wfile.write("<h1>Method not found</h1>".encode())
+
+# httpd = hts.HTTPServer(("127.0.0.1", 8000), Handler)
+# httpd.serve_forever()
