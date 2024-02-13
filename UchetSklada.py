@@ -105,8 +105,6 @@ con.commit()
 window = tk.Tk("Учет склада")
 window.geometry("{}x{}+0+0".format(window.winfo_screenwidth(), window.winfo_screenheight()))
 
-
-
 tk.mainloop()
 
 # cur.execute("CREATE TABLE IF NOT EXISTS movie(title, year, score)")
