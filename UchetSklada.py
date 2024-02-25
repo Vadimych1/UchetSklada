@@ -85,7 +85,7 @@ def create_product_table(cur: sqlite3.Cursor, name: str, displayName: str, desc:
     
 def init_tables(cur: sqlite3.Cursor, tables: list) -> None:
     for table in tables:
-        cur.execute(f"CREATE TABLE IF NOT EXISTS {table["name"]} (id TEXT NOT NULL, name TEXT NOT NULL, count INTEGER NOT NULL, cost INTEGER NOT NULL, status TEXT, date DATETIME)")
+        cur.execute(f"CREATE TABLE IF NOT EXISTS {table["name"]} (id INTEGER NOT NULL, name TEXT NOT NULL, count INTEGER NOT NULL, cost INTEGER NOT NULL, status TEXT, date DATETIME)")
 
 def fetch_from_product_tables(cur: sqlite3.Cursor, tableName: str, count: int | None = None) -> list:
     if count == None:
@@ -94,6 +94,10 @@ def fetch_from_product_tables(cur: sqlite3.Cursor, tableName: str, count: int | 
         cur.execute(f"SELECT * FROM {tableName, count} LIMIT %i")
 
     return cur.fetchall()
+
+def edit_table_val(cur: sqlite3.Cursor, tableName: str, row: int, newName: str, newCount: int, newCost: int, newStatus: str, newDate: str):
+    cur.execute("DELETE FROM {} WHERE id = {}".format(tableName, row))
+    cur.execute("INSERT INTO {} (id, name, count, cost, status, date) VALUES ({}, '{}', {}, {}, '{}', '{}')".format(tableName, row, newName, newCount, newCost, newStatus, newDate))
 
 # ! Connect to database
 con = sqlite3.connect("database/db.db")
@@ -149,11 +153,20 @@ class Handler(hts.SimpleHTTPRequestHandler):
             elif path == "/create_table":
                 create_product_table(cur, query["name"][0], query["displayName"][0], query["description"][0])
                 return
+            elif path == "/edit_table_value":
+                edit_table_val(cur, query["tableName"], query["row"], query["name"], query["count"], query["cost"], query["status"], query["date"])
         except:
             self.wfile.write("ERR".encode())
             return
         
         self.wfile.write("<h1>Method not found</h1>".encode())
+
+# ? METHODS
+# ? /get_table_info - fetch from table
+# ? /get_tables - fetch all table names
+# ? /delete_table - drop table from db
+# ? /create_table - create new table
+# ? /edit_table_value - edit row in table
 
 httpd = hts.HTTPServer(("127.0.0.1", 8000), Handler)
 httpd.serve_forever()
